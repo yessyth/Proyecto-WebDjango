@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ publicacion.titulo }} - Comunidad Automovilismo{% endblock %}
+
+{% block body_class %}detail-view-pinterest-style{% endblock %} {# Clase para el body si necesitamos estilos globales para esta vista #}
+
+{% block content %}
+<div class="pin-detail-modal-overlay"> {# Simula el overlay de un modal si quieres ese efecto #}
+    <div class="pin-detail-container">
+        <!-- Columna Izquierda: Imagen -->
+        <div class="pin-detail-image-column">
+            {% if publicacion.imagen %}
+                <img src="{{ publicacion.imagen.url }}" alt="{{ publicacion.titulo }}" class="pin-detail-featured-image">
+            {% else %}
+                <div class="pin-detail-placeholder-image">
+                    <span>🏁</span>
+                </div>
+            {% endif %}
+            {# Podrías añadir un botón "Más que explorar" como en Pinterest si tienes contenido relacionado #}
+        </div>
+
+        <!-- Columna Derecha: Contenido, Acciones, Comentarios -->
+        <div class="pin-detail-content-column">
+            <header class="pin-detail-header">
+                <div class="pin-actions-top">
+                    {# Aquí irían iconos de compartir, más opciones, etc. si los tuvieras #}
+                    {# <button class="btn-icon"><i class="fas fa-share-alt"></i></button> #}
+                    {# <button class="btn-icon"><i class="fas fa-ellipsis-h"></i></button> #}
+                </div>
+                <div class="pin-save-action">
+                    {# Si tuvieras un sistema de "Guardar/Favoritos" #}
+                    {# <button class="btn btn-secondary">Leerlo</button> #}
+                    <button class="btn btn-primary btn-like-main {% if user in publicacion.likes.all %}liked{% endif %}" 
+                            data-publication-pk="{{ publicacion.pk }}">
+                        {% if user in publicacion.likes.all %}❤️ Quitar Me Gusta{% else %}🤍 Me Gusta{% endif %}
+                    </button>
+                    {# <button class="btn btn-primary">Guardar</button> #}
+                </div>
+            </header>
+
+            <div class="pin-scrollable-content">
+                <section class="pin-main-info">
+                    {# <a href="#" class="pin-source-link">fuente-del-articulo.com</a> #}
+                    <h1 class="pin-detail-title">{{ publicacion.titulo }}</h1>
+                    {% if publicacion.contenido %}
+                        <div class="pin-detail-description">
+                            {{ publicacion.contenido|safe|truncatewords_html:50 }} {# Muestra un extracto, podrías tener un "leer más" #}
+                            {# Si quieres mostrar todo el contenido: {{ publicacion.contenido|safe }} #}
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="pin-author-info">
+                    <a href="#"> {# Enlace al perfil del autor #}
+                        {% if publicacion.autor.perfil.foto %}
+                            <img src="{{ publicacion.autor.perfil.foto.url }}" alt="{{ publicacion.autor.username }}" class="author-avatar-pin-detail">
+                        {% else %}
+                            <img src="{% static 'images/default_profile.png' %}" alt="Avatar por defecto" class="author-avatar-pin-detail">
+                        {% endif %}
+                    </a>
+                    <div class="author-text">
+                        <a href="#" class="author-name">{{ publicacion.autor.username }}</a>
+                        {# <p class="author-followers">100 seguidores</p> #}
+                        <p class="publication-metadata">
+                            <span class="publication-date">{{ publicacion.fecha_creacion|date:"d M Y" }}</span>
+                             · 
+                            <span class="publication-category">{{ publicacion.get_categoria_display }}</span>
+                        </p>
+                    </div>
+                    {# Botón de seguir si lo implementas #}
+                    {# <button class="btn btn-outline-secondary btn-follow">Seguir</button> #}
+                </section>
+                
+                {% if user.is_authenticated and user == publicacion.autor %}
+                    <div class="pin-author-owner-actions">
+                        <a href="{% url 'editar_publicacion' publicacion.pk %}" class="btn btn-sm btn-outline">✏️ Editar</a>
+                        <a href="{% url 'eliminar_publicacion' publicacion.pk %}" class="btn btn-sm btn-danger-outline">🗑️ Eliminar</a>
+                    </div>
+                {% endif %}
+
+                <section class="pin-comments-section">
+                    <h3 class="comments-title">Comentarios (<span id="comment-count">{{ comentarios.count }}</span>)</h3>
+                    
+                    <div class="comments-list-pin">
+                        {% for comentario in comentarios %}
+                            <div class="comment-item-pin" id="comentario-{{ comentario.pk }}">
+                                <a href="#"> {# Enlace al perfil del autor del comentario #}
+                                    {% if comentario.autor.perfil.foto %}
+                                        <img src="{{ comentario.autor.perfil.foto.url }}" alt="{{ comentario.autor.username }}" class="author-avatar-comment-pin">
+                                    {% else %}
+                                        <img src="{% static 'images/default_profile.png' %}" alt="Avatar" class="author-avatar-comment-pin">
+                                    {% endif %}
+                                </a>
+                                <div class="comment-content-pin">
+                                    <p>
+                                        <a href="#" class="comment-author-name">{{ comentario.autor.username }}</a>
+                                        {{ comentario.contenido|linebreaksbr }}
+                                    </p>
+                                    <div class="comment-meta-pin">
+                                        <span>{{ comentario.fecha_creacion|timesince }}</span>
+                                        {% if user.is_authenticated and user == comentario.autor %}
+                                            · <a href="{% url 'editar_comentario' comentario.pk %}" class="comment-action-link">Editar</a>
+                                            · <a href="{% url 'eliminar_comentario' comentario.pk %}" class="comment-action-link delete">Eliminar</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="no-comments-pin">Aún no hay comentarios. ¡Sé el primero!</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div> {# Fin de .pin-scrollable-content #}
+
+            <footer class="pin-comment-form-footer">
+                {% if user.is_authenticated %}
+                    <div class="current-user-avatar">
+                        {% if user.perfil.foto %}
+                            <img src="{{ user.perfil.foto.url }}" alt="{{ user.username }}">
+                        {% else %}
+                            <img src="{% static 'images/default_profile.png' %}" alt="Avatar">
+                        {% endif %}
+                    </div>
+                    <form method="post" action="{% url 'detalle_publicacion' publicacion.pk %}" class="comment-form-pin" id="comment-form">
+                        {% csrf_token %}
+                        {{ form_comentario.contenido.label_tag }}
+                        {{ form_comentario.contenido }} 
+                        {# Errores se podrían mostrar con JS o debajo del input #}
+                        <button type="submit" class="btn-submit-comment" aria-label="Enviar comentario">
+                            <i class="fas fa-paper-plane"></i> {# Ejemplo con Font Awesome #}
+                            <!-- O un simple SVG o texto -->
+                            <!-- > -->
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="login-to-comment-pin">
+                        <a href="{% url 'login' %}?next={{ request.path }}">Inicia sesión</a> para comentar.
+                    </p>
+                {% endif %}
+            </footer>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# JavaScript para el like (adaptado de la versión anterior) y para el envío de comentarios AJAX #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para el botón de "Me Gusta" principal
+    const mainLikeButton = document.querySelector('.btn-like-main');
+    if (mainLikeButton) {
+        mainLikeButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            const publicationId = this.dataset.publicationPk;
+            const url = `{% url 'dar_like_publicacion' 0 %}`.replace('0', publicationId); // Construir URL dinámicamente
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}'; // Obtener CSRF
+
+            fetch(url, {
+                method: 'POST', // Asumimos que la vista de like espera POST
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                const likeCountElement = document.querySelector('.pin-detail-header .like-count'); // Ajustar selector si es necesario
+                if (likeCountElement) { // Si tuvieras un contador visible aquí
+                    likeCountElement.textContent = `${data.count} Me gusta`;
+                }
+                if (data.liked) {
+                    this.classList.add('liked');
+                    this.innerHTML = '❤️ Quitar Me Gusta';
+                } else {
+                    this.classList.remove('liked');
+                    this.innerHTML = '🤍 Me Gusta';
+                }
+                // Actualizar también el contador global si lo tienes en la cabecera del pin
+                const globalLikeCount = document.getElementById(`like-count-${publicationId}`);
+                if(globalLikeCount) globalLikeCount.textContent = data.count;
+
+            })
+            .catch(error => console.error('Error en like:', error));
+        });
+    }
+
+    // Lógica para el formulario de comentarios (AJAX)
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const url = this.action;
+            const csrfToken = formData.get('csrfmiddlewaretoken');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text(); // O response.json() si la vista devuelve JSON con el comentario renderizado
+                }
+                throw new Error('Error al enviar comentario.');
+            })
+            .then(htmlOrData => {
+                // Opción 1: Si la vista devuelve el HTML del nuevo comentario (más complejo en la vista)
+                // const commentsList = document.querySelector('.comments-list-pin');
+                // commentsList.insertAdjacentHTML('beforeend', htmlOrData); // O al principio: 'afterbegin'
+                
+                // Opción 2: Recargar solo la sección de comentarios o toda la página (más simple)
+                // Por ahora, simplemente limpiamos el textarea y asumimos que el usuario verá el cambio al recargar o la vista redirige
+                this.querySelector('textarea[name="contenido"]').value = ''; 
+                
+                // Idealmente, la vista de comentario debería devolver el comentario creado en JSON
+                // y aquí lo añadiríamos dinámicamente al DOM y actualizaríamos el contador.
+                // Para simplificar, por ahora, vamos a recargar la página para ver el nuevo comentario.
+                // O mejor, la vista `detalle_publicacion` ya redirige, por lo que el JS no es estrictamente necesario
+                // si la vista redirige a sí misma. El preventDefault() lo evitaría.
+                // Si la vista redirige, no necesitas el fetch aquí para el form de comentario,
+                // solo para el botón de like si quieres AJAX.
+                
+                // Si la vista *no* redirige y quieres actualizar con JS:
+                // 1. La vista detalle_publicacion, en el POST de comentario, debería devolver JsonResponse
+                //    con el HTML del nuevo comentario y el nuevo contador.
+                // 2. Aquí procesarías ese JSON para añadir el comentario al DOM y actualizar el contador.
+                
+                // Por ahora, si la vista detalle_publicacion redirige tras POST, el fetch es redundante para comentarios.
+                // Si quieres AJAX puro para comentarios, hay que modificar la vista de detalle.
+                // Si el formulario se envía normalmente (sin event.preventDefault()), la redirección de la vista funcionará.
+                // Vamos a permitir el envío normal del formulario de comentario por ahora para simplicidad.
+                // Para ello, puedes comentar o quitar el event.preventDefault() y el fetch para el form de comentario.
+                
+                // Si el formulario de comentario se envía normalmente, no necesitas el fetch aquí.
+                // Si tu vista detalle_publicacion ya redirige a sí misma después de un POST exitoso de comentario,
+                // el JavaScript para el formulario de comentario no es estrictamente necesario o puede ser más simple.
+                // Este script de ejemplo asume que quieres manejarlo con AJAX, pero si la vista
+                // ya hace un redirect, el preventDefault lo está bloqueando.
+
+                // Para que el formulario de comentarios funcione con la redirección de Django:
+                // NO hagas event.preventDefault() para el formulario de comentarios.
+                // O, si haces preventDefault, asegúrate de que la vista devuelva JSON y actualices el DOM.
+
+                // SIMPLIFICACIÓN: Dejamos que el formulario de comentario se envíe de forma tradicional.
+                // Puedes quitar el eventListener para commentForm si la redirección de Django es suficiente.
+                // Si quieres AJAX para comentarios, la vista `detalle_publicacion` necesitaría
+                // devolver JSON con el comentario renderizado.
+                 window.location.reload(); // Solución simple para ver el nuevo comentario y contador.
+            })
+            .catch(error => {
+                console.error('Error al enviar comentario:', error);
+                // Aquí podrías mostrar errores del formulario si la vista los devuelve en JSON
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

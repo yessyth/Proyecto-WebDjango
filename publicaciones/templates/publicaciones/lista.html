@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Publicaciones de Automovilismo{% endblock %}
+
+{% block content %}
+<div class="publications-feed-page container">
+
+    <header class="feed-header">
+        <h1>Explora Publicaciones</h1>
+        <p>Descubre lo último de la comunidad de automovilismo.</p>
+    </header>
+
+    <!-- Filtros y Búsqueda -->
+    <aside class="feed-filters-sidebar">
+        <form method="get" action="{% url 'lista_publicaciones' %}" class="filters-form">
+            <div class="filter-group search-group">
+                <label for="buscar" class="sr-only">Buscar publicaciones</label>
+                <input type="text" name="buscar" id="buscar" value="{{ busqueda_actual|default:'' }}" placeholder="Buscar">
+                <button type="submit" class="btn-search"><span class="icon">🔍</span></button>
+            </div>
+            <div class="filter-group category-group">
+                <label for="categoria" class="sr-only">Filtrar por categoría</label>
+                <select name="categoria" id="categoria" onchange="this.form.submit()">
+                    <option value="todos" {% if not categoria_actual or categoria_actual == 'todos' %}selected{% endif %}>Todas las Categorías</option>
+                    {% for value, display_name in categorias_choices %}
+                        <option value="{{ value }}" {% if categoria_actual == value %}selected{% endif %}>{{ display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if categoria_actual or busqueda_actual %}
+                <div class="filter-group clear-filters-group">
+                    <a href="{% url 'lista_publicaciones' %}" class="btn btn-outline btn-sm">Limpiar Filtros</a>
+                </div>
+            {% endif %}
+        </form>
+    </aside>
+
+    <!-- Cuadrícula de Publicaciones Estilo Pinterest -->
+    <main class="publications-grid-pinterest">
+        {% if publicaciones %}
+            {% for publicacion in publicaciones %}
+            <article class="publication-pin">
+                {# El enlace principal ya no envuelve las acciones de like para evitar anidamiento de forms #}
+                <a href="{{ publicacion.get_absolute_url }}" class="pin-main-link">
+                    {% if publicacion.imagen %}
+                    <div class="pin-image-container">
+                        <img src="{{ publicacion.imagen.url }}" alt="{{ publicacion.titulo }}">
+                    </div>
+                    {% else %}
+                    <div class="pin-image-container placeholder-pin-image">
+                        <span>🏁</span> <!-- Placeholder si no hay imagen -->
+                    </div>
+                    {% endif %}
+                    <div class="pin-content">
+                        <h3 class="pin-title">{{ publicacion.titulo }}</h3>
+                        {% if publicacion.autor %}
+                        <p class="pin-author">
+                            {% if publicacion.autor.perfil.foto %}
+                            <img src="{{ publicacion.autor.perfil.foto.url }}" alt="{{ publicacion.autor.username }}" class="author-avatar-sm">
+                            {% else %}
+                            <img src="{% static 'images/default_profile.png' %}" alt="Avatar por defecto" class="author-avatar-sm">
+                            {% endif %}
+                            {{ publicacion.autor.username }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </a>
+                {# Sección de Likes separada del enlace principal del pin #}
+                <div class="pin-actions">
+                    <span class="like-count-pin" id="like-count-{{ publicacion.pk }}">
+                        ❤️ {{ publicacion.total_likes }}
+                    </span>
+                    {% if user.is_authenticated %}
+                    <form action="{% url 'dar_like_publicacion' publicacion.pk %}" method="post" class="like-form" id="like-form-{{ publicacion.pk }}">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="btn-like-pin {% if user in publicacion.likes.all %}liked{% endif %}" 
+                                aria-label="{% if user in publicacion.likes.all %}Quitar Me Gusta{% else %}Dar Me Gusta{% endif %}">
+                            {% if user in publicacion.likes.all %}Gustado{% else %}Me gusta{% endif %}
+                        </button>
+                    </form>
+                    {% else %}
+                        {# Podrías poner un enlace a login si no está autenticado y quieres que den like desde aquí #}
+                        {# <a href="{% url 'login' %}?next={{ request.path }}" class="btn-like-pin">Me gusta</a> #}
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <div class="no-publications-message">
+                <p>No se encontraron publicaciones que coincidan con tus filtros.</p>
+                {% if categoria_actual or busqueda_actual %}
+                    <p><a href="{% url 'lista_publicaciones' %}" class="btn btn-primary">Ver todas las publicaciones</a></p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </main>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+        <nav class="pagination-container" aria-label="Paginación de publicaciones">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if busqueda_actual %}&buscar={{ busqueda_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">« Anterior</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">« Anterior</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if busqueda_actual %}&buscar={{ busqueda_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">{{ num }}</a></li>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages %} {# Muestra primera y última página y puntos suspensivos una vez #}
+                        {% if forloop.counter == 2 and page_obj.number > 4 %} {# Puntos suspensivos después de la primera página #}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if busqueda_actual %}&buscar={{ busqueda_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">{{ num }}</a></li>
+                        {% if forloop.counter == page_obj.paginator.page_range|length|add:"-1" and page_obj.number < page_obj.paginator.num_pages|add:"-3" %} {# Puntos suspensivos antes de la última página #}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if busqueda_actual %}&buscar={{ busqueda_actual }}{% endif %}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">Siguiente »</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Siguiente »</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# El mismo JavaScript de detalle.html funcionará aquí para los forms con clase 'like-form' #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.like-form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); 
+
+            const url = this.action;
+            const method = this.method;
+            const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+            const publicationId = this.id.split('-').pop(); 
+            const likeButton = this.querySelector('.btn-like-pin'); // Selector específico para el botón del pin
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const likeCountElement = document.getElementById(`like-count-${publicationId}`);
+                if (likeCountElement) {
+                    likeCountElement.innerHTML = `❤️ ${data.count}`; // Actualiza solo el número, manteniendo el icono
+                }
+
+                if (likeButton) { // Asegurarse que el botón existe
+                    if (data.liked) {
+                        likeButton.classList.add('liked');
+                        likeButton.textContent = 'Gustado';
+                        likeButton.setAttribute('aria-label', 'Quitar Me Gusta');
+                    } else {
+                        likeButton.classList.remove('liked');
+                        likeButton.textContent = 'Me gusta';
+                        likeButton.setAttribute('aria-label', 'Dar Me Gusta');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error al dar like:', error);
+                // Podrías mostrar un mensaje de error al usuario aquí
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

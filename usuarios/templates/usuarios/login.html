@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - Comunidad Automovilismo{% endblock %}
+
+{% block body_class %}login-page{% endblock %} <!-- Añade una clase específica al body -->
+
+{% block content %}
+<div class="login-container">
+    <div class="login-image-panel">
+        <div class="login-image-overlay-text">
+            <h2>Inicia sesión <br>para encender motores</h2>
+            <p>Únete a la comunidad de entusiastas del automovilismo.</p>
+        </div>
+    </div>
+    <div class="login-form-panel">
+        <div class="login-form-card">
+            <div class="logo-container">
+                <!-- Puedes poner un logo aquí si quieres, o usar el texto -->
+                <span class="logo-icon">🏁</span>
+                <h1>Bienvenido</h1>
+            </div>
+            
+            <p class="form-intro">Ingresa tus datos para continuar.</p>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <div class="form-error non-field-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                
+                <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
+            </form>
+            <div class="extra-links">
+                <p><a href="#">¿Olvidaste tu contraseña?</a></p>
+                <hr>
+                <p>¿No tienes cuenta? <a href="{% url 'registro' %}" class="font-weight-bold">Regístrate aquí</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Ocultar nav y footer específicamente para la página de login usando la clase del body */
+    .login-page nav,
+    .login-page footer {
+        display: none !important; /* Usamos !important para asegurar que se oculte si hay otras reglas */
+    }
+</style>
+{% endblock %}

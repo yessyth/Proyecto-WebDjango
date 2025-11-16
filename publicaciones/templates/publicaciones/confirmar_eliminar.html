@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Eliminación - {{ publicacion.titulo }}{% endblock %}
+
+{% block content %}
+<div class="confirm-delete-page container">
+    <div class="confirm-delete-card">
+        <h1 class="page-title">🗑️ Confirmar Eliminación</h1>
+        <p class="confirmation-message">
+            ¿Estás seguro de que quieres eliminar permanentemente la publicación titulada:
+            <br><strong>"{{ publicacion.titulo }}"</strong>?
+        </p>
+        
+        <blockquote class="item-to-delete-preview">
+            <p><strong>Autor:</strong> {{ publicacion.autor.username }}</p>
+            <p><strong>Categoría:</strong> {{ publicacion.get_categoria_display }}</p>
+            <p><strong>Contenido (extracto):</strong> {{ publicacion.contenido|truncatewords:30 }}</p>
+        </blockquote>
+
+        <p class="warning-message">
+            <strong>¡Atención!</strong> Esta acción no se puede deshacer. Todos los comentarios asociados a esta publicación también serán eliminados.
+        </p>
+
+        <form method="post" class="confirmation-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger btn-lg">Sí, Eliminar Permanentemente</button>
+                <a href="{{ publicacion.get_absolute_url }}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

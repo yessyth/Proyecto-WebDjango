@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+{% load static %}  <!-- Carga la librería de estáticos -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Comunidad Automovilismo{% endblock %}</title>
+    <!-- Enlace al CSS global -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %} <!-- Para CSS o JS específico de una página -->
+</head>
+<body class="{% block body_class %}{% endblock %}"> <!-- Clase para el body -->
+    {% if not no_nav_footer %} <!-- Condición para mostrar nav -->
+    <nav>
+        <h1><a href="{% url 'inicio' %}">🏁 The Midnight Club 🏁</a></h1>
+        <ul>
+            <li><a href="{% url 'inicio' %}">Inicio</a></li>
+            <li><a href="{% url 'lista_publicaciones' %}">Publicaciones</a></li>
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'crear_publicacion' %}">Nueva Publicación</a></li>
+                <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
+                
+                <!-- ENLACE DE NOTIFICACIONES AQUÍ DENTRO DEL UL Y DEL IF USER.IS_AUTHENTICATED -->
+                <li> 
+                    <a href="{% url 'notificaciones:lista' %}">
+                        Notificaciones 
+                        {% if notificaciones_no_leidas_count > 0 %}
+                            <span class="badge notification-badge">{{ notificaciones_no_leidas_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+                <li>
+                    <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="button-link">Cerrar Sesión</button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+                <li><a href="{% url 'registro' %}">Registro</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% if not no_nav_footer %} <!-- Condición para mostrar footer -->
+    <footer>
+        <p>© 2025 Comunidad de Automovilismo</p>
+    </footer>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %} <!-- Para JS específico al final del body -->
+</body>
+</html>

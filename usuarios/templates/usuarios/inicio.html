@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inicio - Comunidad Automovilismo{% endblock %}
+
+{% block content %}
+<!-- Hero Banner Section -->
+<section class="hero-banner">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Bienvenido al club </h1>
+        {% if not user.is_authenticated %}
+            <p class="hero-subtitle">Una comunidad donde los amantes del automovilismo comparten su pasión.</p>
+            <div class="hero-auth-links">
+                <a href="{% url 'login' %}" class="btn btn-hero-login">🔑 Iniciar sesión</a>
+                <a href="{% url 'registro' %}" class="btn btn-hero-register">📝 Registrarse</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<div class="container page-content">
+    {% if user.is_authenticated %}
+        <div class="user-greeting-section">
+            <h2>Hola, {{ user.username }}!</h2>
+            
+            {% if user.perfil %}
+                <div class="user-profile-summary">
+                    {% if user.perfil.foto %}
+                        <img src="{{ user.perfil.foto.url }}" alt="Foto de perfil {{ user.username }}" class="profile-summary-photo">
+                    {% endif %}
+                    <div class="profile-summary-details">
+                        {% if user.perfil.biografia %}
+                            <p><strong>Biografía:</strong> {{ user.perfil.biografia|truncatewords:20 }}</p>
+                        {% endif %}
+                        {% if user.perfil.autos_favoritos %}
+                            <p><strong>Autos favoritos:</strong> {{ user.perfil.autos_favoritos }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="quick-actions">
+                <a href="{% url 'perfil' %}" class="btn btn-outline">👤 Ver mi perfil</a>
+                <a href="{% url 'editar_perfil' %}" class="btn btn-outline">✏️ Editar mi perfil</a>
+                <a href="{% url 'crear_publicacion' %}" class="btn btn-primary">➕ Nueva publicación</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Últimas publicaciones -->
+    <section class="latest-publications-section">
+        <h2>Últimas publicaciones</h2>
+        
+        {% if ultimas_publicaciones %}
+            <div class="publications-grid">
+                {% for publicacion in ultimas_publicaciones %}
+                <article class="publication-card">
+                    <a href="{{ publicacion.get_absolute_url }}" class="publication-card-link">
+                        {% if publicacion.imagen %}
+                            <div class="publication-card-image-container">
+                                <img src="{{ publicacion.imagen.url }}" alt="{{ publicacion.titulo }}">
+                            </div>
+                        {% else %}
+                            <div class="publication-card-image-container placeholder-image">
+                                <!-- Puedes poner un SVG o un div con un color de fondo aquí -->
+                                <span>🏁</span>
+                            </div>
+                        {% endif %}
+                        <div class="publication-card-content">
+                            <h3>{{ publicacion.titulo }}</h3>
+                            <!-- <p class="publication-excerpt">{{ publicacion.contenido|truncatewords:15 }}</p> -->
+                        </div>
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Aún no hay publicaciones disponibles. ¡Sé el primero en compartir!</p>
+        {% endif %}
+        
+        <p class="all-publications-link-container">
+            <a href="{% url 'lista_publicaciones' %}" class="btn btn-secondary">Ver todas las publicaciones →</a>
+        </p>
+    </section>
+</div>
+{% endblock %}

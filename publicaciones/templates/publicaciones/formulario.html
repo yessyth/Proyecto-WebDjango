@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Comunidad Automovilismo{% endblock %}
+
+{% block content %}
+<div class="publication-form-page container">
+    <div class="publication-form-card">
+        <h1 class="page-title">{{ titulo }}</h1>
+        {% if publicacion %}
+        <p class="page-subtitle">Modifica los detalles de tu publicación.</p>
+        {% else %}
+        <p class="page-subtitle">Comparte tus conocimientos y pasión con la comunidad.</p>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger non-field-errors">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-section">
+                <h2 class="form-section-title">Detalles de la Publicación</h2>
+                
+                <div class="form-group">
+                    {{ form.titulo.label_tag }}
+                    {{ form.titulo }}
+                    {% if form.titulo.help_text %}<small class="form-text text-muted">{{ form.titulo.help_text }}</small>{% endif %}
+                    {% for error in form.titulo.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.categoria.label_tag }}
+                    {{ form.categoria }}
+                    {% if form.categoria.help_text %}<small class="form-text text-muted">{{ form.categoria.help_text }}</small>{% endif %}
+                    {% for error in form.categoria.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.contenido.label_tag }}
+                    {{ form.contenido }}
+                    {% if form.contenido.help_text %}<small class="form-text text-muted">{{ form.contenido.help_text }}</small>{% endif %}
+                    {% for error in form.contenido.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="form-section-title">Imagen de Portada</h2>
+                <div class="form-group image-field-group"> <!-- Mantenemos la misma clase que en editar_perfil -->
+                    {{ form.imagen.label_tag }}
+                    {% if form.instance.imagen %} {# CORREGIDO AQUÍ #}
+                        <div class="current-image-preview">
+                            <p>Imagen actual:</p>
+                            <img src="{{ form.instance.imagen.url }}" alt="Imagen actual de la publicación" class="img-thumbnail current-publication-image">
+                        </div>
+                    {% endif %}
+                    {{ form.imagen }}
+                    {% if form.imagen.help_text %}<small class="form-text text-muted">{{ form.imagen.help_text }}</small>{% endif %}
+                    {% for error in form.imagen.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    {% if publicacion %}Guardar Cambios{% else %}Publicar{% endif %}
+                </button>
+                {% if publicacion %}
+                    <a href="{{ publicacion.get_absolute_url }}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+                {% else %}
+                    <a href="{% url 'lista_publicaciones' %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

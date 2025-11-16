@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Notificaciones{% endblock %}
+
+{% block content %}
+<div class="notifications-page container">
+    <header class="notifications-header">
+        <h1 class="page-title">Mis Notificaciones</h1>
+        {% if notificaciones_no_leidas_count > 0 %}
+            <form action="{% url 'notificaciones:marcar_todas_leidas' %}" method="post" id="mark-all-read-form" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Marcar todas como leídas</button>
+            </form>
+        {% endif %}
+    </header>
+
+    {% if notificaciones_list %}
+        <ul class="notifications-list">
+            {% for notif in notificaciones_list %}
+                <li class="notification-item {% if not notif.leida %}unread{% else %}read{% endif %}">
+                    <a href="{% url 'notificaciones:marcar_leida' notif.pk %}" class="notification-link-wrapper">
+                        <div class="notification-icon">
+                            {% if notif.tipo == notif.NUEVO_COMENTARIO %}💬{% endif %}
+                            {% if notif.tipo == notif.NUEVO_LIKE %}❤️{% endif %}
+                        </div>
+                        <div class="notification-content">
+                            <p class="notification-message">{{ notif.mensaje|safe }}</p>
+                            <span class="notification-date">{{ notif.fecha_creacion|timesince }} atrás</span>
+                        </div>
+                        {% if not notif.leida %}
+                            <span class="unread-indicator" title="No leída">•</span>
+                        {% endif %}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="no-notifications">No tienes notificaciones.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# Opcional: AJAX para marcar todas como leídas #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const markAllReadForm = document.getElementById('mark-all-read-form');
+    if (markAllReadForm) {
+        markAllReadForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Actualizar UI: quitar indicadores de no leídas, actualizar contador en nav
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                        item.classList.add('read');
+                        const indicator = item.querySelector('.unread-indicator');
+                        if (indicator) indicator.remove();
+                    });
+                    const navBadge = document.querySelector('.notification-badge');
+                    if (navBadge) navBadge.textContent = '0'; // O quitar el badge
+                    // Opcionalmente, deshabilitar el botón "Marcar todas como leídas"
+                    this.querySelector('button').disabled = true; 
+                }
+            })
+            .catch(error => console.error('Error al marcar todas como leídas:', error));
+        });
+    }
+});
+</script>
+{% endblock %}

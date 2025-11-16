@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Comentario{% endblock %}
+
+{% block content %}
+<div class="edit-comment-page container">
+    <div class="form-card"> {# Reutilizamos una clase genérica para tarjetas de formulario #}
+        <h1 class="page-title">Editar Comentario</h1>
+        <p class="page-subtitle">Modifica tu comentario y guarda los cambios.</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger non-field-errors">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                {# Asumimos que ComentarioForm solo tiene el campo 'contenido' #}
+                {{ form.contenido.label_tag }}
+                {{ form.contenido }}
+                {% if form.contenido.help_text %}<small class="form-text text-muted">{{ form.contenido.help_text|safe }}</small>{% endif %}
+                {% for error in form.contenido.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">Guardar Cambios</button>
+                <a href="{% url 'detalle_publicacion' comentario.publicacion.pk %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

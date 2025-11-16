@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ request.user.username }} - Perfil{% endblock %}
+
+{% block content %}
+<div class="profile-page-container">
+
+    <!-- Profile Header -->
+    <header class="profile-header">
+        <div class="cover-image-container">
+            {% if perfil_usuario.foto_portada %}
+                <img src="{{ perfil_usuario.foto_portada.url }}" alt="Foto de portada de {{ request.user.username }}" class="cover-image">
+            {% else %}
+                <div class="cover-image-default"></div> <!-- Placeholder si no hay foto de portada -->
+            {% endif %}
+        </div>
+
+        <div class="profile-header-main">
+            <div class="profile-picture-actions-wrapper">
+                <div class="profile-picture-container">
+                    {% if perfil_usuario.foto %}
+                        <img src="{{ perfil_usuario.foto.url }}" alt="Foto de perfil de {{ request.user.username }}" class="profile-picture">
+                    {% else %}
+                        <img src="{% static 'images/default_profile.png' %}" alt="Foto de perfil por defecto" class="profile-picture default"> 
+                        <!-- Necesitarás una imagen 'default_profile.png' en static/images/ -->
+                    {% endif %}
+                </div>
+                <div class="profile-actions">
+                    <a href="{% url 'editar_perfil' %}" class="btn btn-outline-light">✏️ Editar Perfil</a>
+                </div>
+            </div>
+
+            <div class="profile-user-info">
+                <h1 class="profile-display-name">{{ request.user.get_full_name|default:request.user.username }}</h1>
+                <p class="profile-username">@{{ request.user.username }}</p>
+                
+                {% if perfil_usuario.biografia %}
+                    <p class="profile-bio">{{ perfil_usuario.biografia }}</p>
+                {% endif %}
+
+                <ul class="profile-details-list">
+                    {% if perfil_usuario.autos_favoritos %}
+                    <li><span class="icon">🚗</span> <strong>Autos Favoritos:</strong> {{ perfil_usuario.autos_favoritos }}</li>
+                    {% endif %}
+                    <!-- Puedes añadir más detalles aquí, como ubicación, web, etc. si los tienes en el modelo Perfil -->
+                    <li><span class="icon">📅</span> <strong>Se unió en:</strong> {{ request.user.date_joined|date:"F Y" }}</li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Profile Content (Publicaciones del usuario) -->
+    <section class="profile-content-section">
+        <h2 class="section-title">Mis Publicaciones ({{ publicaciones_usuario.count }})</h2>
+        
+        {% if publicaciones_usuario %}
+            <div class="publications-grid profile-publications-grid">
+                {% for publicacion in publicaciones_usuario %}
+                <article class="publication-card">
+                    <a href="{{ publicacion.get_absolute_url }}" class="publication-card-link">
+                        {% if publicacion.imagen %}
+                            <div class="publication-card-image-container">
+                                <img src="{{ publicacion.imagen.url }}" alt="{{ publicacion.titulo }}">
+                            </div>
+                        {% else %}
+                            <div class="publication-card-image-container placeholder-image">
+                                <span>🏁</span>
+                            </div>
+                        {% endif %}
+                        <div class="publication-card-content">
+                            <h3>{{ publicacion.titulo }}</h3>
+                            <p class="publication-date"><small>{{ publicacion.fecha_creacion|date:"d M Y" }}</small></p>
+                            <!-- Opcional: añadir un botón de editar/eliminar si es el autor -->
+                            <!-- <div class="publication-actions">
+                                <a href="{% url 'editar_publicacion' publicacion.pk %}" class="btn btn-sm btn-outline">Editar</a>
+                            </div> -->
+                        </div>
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Aún no has realizado ninguna publicación. ¡<a href="{% url 'crear_publicacion' %}">Anímate a compartir algo</a>!</p>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}

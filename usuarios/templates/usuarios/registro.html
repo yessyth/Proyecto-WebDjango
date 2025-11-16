@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registro - Comunidad Automovilismo{% endblock %}
+
+{% block body_class %}register-page{% endblock %} <!-- Clase específica para el body de esta página -->
+
+{% block content %}
+<div class="register-container">
+    <div class="register-form-card">
+        <div class="logo-container">
+            <span class="logo-icon">🏁</span>
+            <h1>Crea tu cuenta</h1>
+        </div>
+        
+        <p class="form-intro">Únete a la comunidad y comparte tu pasión.</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text|safe }}</small> <!-- Añadido |safe para los help_text de UserCreationForm -->
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="form-error non-field-error">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+        </form>
+        <div class="extra-links">
+            <hr>
+            <p>¿Ya tienes cuenta? <a href="{% url 'login' %}" class="font-weight-bold">Inicia sesión aquí</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Ocultar nav y footer específicamente para la página de registro usando la clase del body */
+    .register-page nav,
+    .register-page footer {
+        display: none !important; 
+    }
+</style>
+{% endblock %}

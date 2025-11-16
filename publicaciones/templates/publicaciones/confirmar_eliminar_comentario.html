@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Eliminación de Comentario{% endblock %}
+
+{% block content %}
+<div class="confirm-delete-page container">
+    <div class="confirm-delete-card">
+        <h1 class="page-title">🗑️ Confirmar Eliminación de Comentario</h1>
+        <p class="confirmation-message">
+            ¿Estás seguro de que quieres eliminar permanentemente este comentario?
+        </p>
+        
+        <blockquote class="item-to-delete-preview comment-preview">
+            <p><strong>Autor:</strong> {{ comentario.autor.username }}</p>
+            <p><strong>Comentario:</strong> "{{ comentario.contenido|truncatewords:30 }}"</p>
+            <p><strong>En la publicación:</strong> "{{ comentario.publicacion.titulo }}"</p>
+        </blockquote>
+
+        <p class="warning-message">
+            <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+        </p>
+
+        <form method="post" class="confirmation-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger btn-lg">Sí, Eliminar Comentario</button>
+                <a href="{% url 'detalle_publicacion' comentario.publicacion.pk %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
